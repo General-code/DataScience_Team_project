@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV, KFold
 from sklearn.metrics import mean_squared_error
 from matplotlib import pyplot as plt
 import seaborn as sns
+from sklearn.linear_model import LinearRegression
 
 pd.set_option('display.max_columns',None)
 
@@ -155,6 +156,12 @@ plt.figure(figsize=(13,13))
 sns.heatmap(data=dfc.corr(), annot=True,
 fmt = '.2f', linewidths=.5, cmap='Blues')
 plt.show()
+
+
+
+
+
+
 
 #Use ensemble learning to predict and evaluate (cv: KFold, GradientBoosting method)
 #target: 'AMT_INCOME_TOTAL',
