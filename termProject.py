@@ -130,19 +130,20 @@ df = outliers_iqr(df,'DAYS_EMPLOYED')
 # Use only continuous value
 # exclude non-necessary features
 dfc = df.drop(columns=["FLAG_PHONE", "STATUS", "ID"])
-plt.figure(figsize=(14,14))
+plt.figure(figsize=(14, 14))
 sns.heatmap(data=dfc.corr(), annot=True,
 fmt = '.2f', linewidths=.5, cmap='Blues')
 plt.show()
 # plot linear regression between AMT_INCOME and the other related features
 # Use subplots with thw rows and four columns. axs has 4x2 ax.
+sampled_df = df.sample(n=150, random_state=1)
 fig, axs = plt.subplots(figsize=(16, 8), ncols=4, nrows=2)
 lm_features = ["CNT_FAM_MEMBERS", "DAYS_BIRTH", "DAYS_EMPLOYED", "FLAG_WORK_PHONE",
                "MONTHS_BALANCE", "CNT_CHILDREN", "FLAG_OWN_CAR", "FLAG_OWN_REALTY"]
 for i, feature in enumerate(lm_features):
     row = int(i / 4)
     col = i % 4
-    sns.regplot(x=feature, y='AMT_INCOME_TOTAL', data=df.head(500), ax=axs[row][col])
+    sns.regplot(x=feature, y='AMT_INCOME_TOTAL', data=sampled_df, ax=axs[row][col])
 plt.show()
 
 #fill 'CNT_CHILDREN' with predicted value with 'CNT_FAM_MEMBERS'
