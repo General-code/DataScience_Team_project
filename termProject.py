@@ -12,8 +12,8 @@ import seaborn as sns
 
 pd.set_option('display.max_columns',None)
 
-credit = pd.read_csv(r"credit_record.csv")
-application = pd.read_csv(r"application_record.csv")
+credit = pd.read_csv(r"D:/credit_record.csv")
+application = pd.read_csv(r"D:/application_record.csv")
 #combine application_record.csv & credit_record.csv()
 df = application.merge(credit,how='left',on='ID')
 print("\n============combien two csv file===============")
@@ -57,19 +57,12 @@ df.drop(['FLAG_MOBIL' , 'OCCUPATION_TYPE'], axis=1, inplace=True)
 print("\n========column list(after remove two columns=============")
 print(df.columns.tolist())
 
-
-#STATUS를 라벨링 ->
-df.at[df['STATUS']=='X', 'STATUS']=0
-df.at[df['STATUS']=='C', 'STATUS']=1
-df.at[df['STATUS']=='0', 'STATUS']=2
-df.at[df['STATUS']=='1', 'STATUS']=3
-df.at[df['STATUS']=='2', 'STATUS']=4
-df.at[df['STATUS']=='3', 'STATUS']=5
-df.at[df['STATUS']=='4', 'STATUS']=6
-df.at[df['STATUS']=='5', 'STATUS']=7
-print("\n========STATUS 재분류=============")
-print(df['STATUS'])
-
+#Random null값 생성하기
+import random
+for i in range(1,1000):
+    random_row = random.randrange(0,36456)
+    random_col = 4
+    df.iloc[random_row,random_col] = np.nan
 
 #bfill 로 채우기 na값 채우기
 df.fillna(method='bfill',inplace=True)
@@ -83,42 +76,27 @@ df.fillna(method='bfill',inplace=True)
 from sklearn import preprocessing
 le = preprocessing.LabelEncoder()
 
-df['CODE_GENDER']=le.fit_transform(df['CODE_GENDER'])
-df['FLAG_OWN_CAR']=le.fit_transform(df['FLAG_OWN_CAR'])
-df['FLAG_OWN_REALTY']=le.fit_transform(df['FLAG_OWN_REALTY'])
-
-
-#onehot encoding
-from sklearn import preprocessing
-le = preprocessing.OneHotEncoder()
-
 def labelEncode(df, name):
     encoder = preprocessing.LabelEncoder()
     encoder.fit(df[name])
     labels = encoder.transform(df[name])
     df.loc[:, name] = labels
 
-def onehotEncode(df,name):
+labelEncode(df,'CODE_GENDER')
+labelEncode(df,'FLAG_OWN_CAR')
+labelEncode(df,'FLAG_OWN_REALTY')
+labelEncode(df,'STATUS')
+
+
+#onehot encoding
+from sklearn import preprocessing
+le = preprocessing.OneHotEncoder()
+def onehotEncode(df, name):
     le = preprocessing.OneHotEncoder(handle_unknown='ignore')
     enc = df[[name]]
     enc = le.fit_transform(enc).toarray()
     enc_df = pd.DataFrame(enc, columns=le.categories_[0])
     df.loc[:, le.categories_[0]] = enc_df
-
-df = df.reset_index(drop=True)
-
-# onehotEncode(df,'NAME_HOUSING_TYPE')
-# onehotEncode(df,'NAME_INCOME_TYPE')
-# onehotEncode(df,'NAME_FAMILY_STATUS')
-# onehotEncode(df,'NAME_EDUCATION_TYPE')
-labelEncode(df,'NAME_HOUSING_TYPE')
-labelEncode(df,'NAME_INCOME_TYPE')
-labelEncode(df,'NAME_FAMILY_STATUS')
-labelEncode(df,'NAME_EDUCATION_TYPE')
-df.drop(columns=['NAME_HOUSING_TYPE','NAME_INCOME_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE'],inplace=True)
-
-
-
 
 #feature scaling (categorical은 labeling 돼서 필요X)
 #'AMT_INCOME_TOTAL','DAYS_BIRTH','DAYS_EMPLOYED' 세가지만
@@ -149,47 +127,61 @@ df = outliers_iqr(df,'DAYS_EMPLOYED')
 
 
 # Correlation HeatMap
-# removed non necessary Categorical data
-dfc = df.drop(columns=["STATUS", "ID", "FLAG_PHONE"], inplace=False)
-plt.figure(figsize=(13,13))
-sns.heatmap(data=dfc.corr(), annot=True,
+# Use only continuous value
+plt.figure(figsize=(10,10))
+sns.heatmap(data=df.corr(), annot=True,
 fmt = '.2f', linewidths=.5, cmap='Blues')
 plt.show()
 
+df = df.reset_index(drop=True)
+onehotEncode(df,'NAME_HOUSING_TYPE')
+onehotEncode(df,'NAME_INCOME_TYPE')
+onehotEncode(df,'NAME_FAMILY_STATUS')
+onehotEncode(df,'NAME_EDUCATION_TYPE')
+df.drop(columns=['NAME_HOUSING_TYPE','NAME_INCOME_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE'],inplace=True)
+
+print(df)
+
+
 #Use ensemble learning to predict and evaluate (cv: KFold, GradientBoosting method)
 #target: 'AMT_INCOME_TOTAL',
-# target = df.columns.tolist()
-# target.remove('AMT_INCOME_TOTAL')
-# target.remove('ID')
-# feature = {'AMT_INCOME_TOTAL'}
-#
-# FoldNum = 2
-# x = pd.DataFrame(df.loc[:,target],columns=target)
-# y = df[['AMT_INCOME_TOTAL']]
-# x_train, x_test, y_train, y_test= train_test_split(x,y, test_size = 1/FoldNum, shuffle=True)
-# x_train, x_valid, y_train, y_valid= train_test_split(x_train,y_train, test_size = 1/FoldNum, shuffle=True)
-#
-# param_grid = {'n_estimators':[100,200,300],'max_features':[1,4,7],'max_depth':[1,10,100,200],'criterion':["mse","friedman_mse"]}
-# model = sklearn.ensemble.GradientBoostingRegressor(learning_rate=0.01,min_samples_split=3)
-#
-# kfold = KFold(FoldNum,shuffle=True,random_state=1)
-# GBR_gscv = GridSearchCV(model, param_grid,cv=kfold,n_jobs=-1)
-# GBR_gscv.fit(x_train,y_train.values.ravel())
-#
-# GBR_gscv.fit(x_valid,y_valid.values.ravel())
-# print("\nValid Score: ",GBR_gscv.score(x_valid,y_valid))
-#
-# GBR_gscv.fit(x_test,y_test.values.ravel())
-# ypred = GBR_gscv.predict(x_test)
-# mse_GBR = mean_squared_error(y_test,ypred)
-# print("Test Score: ",GBR_gscv.score(x_test,y_test))
-# print("MSE on test set: {:.4f}".format(mse_GBR))
-#
-#
-# y_predict = GBR_gscv.predict(x_test)
-# compareY = pd.DataFrame(y_test)
-# compareY['predict'] = y_predict.round()
-# compareY['difference'] = abs(compareY['AMT_INCOME_TOTAL'] - compareY['predict'])
-# print("\n",compareY)
+target = df.columns.tolist()
+target.remove('AMT_INCOME_TOTAL')
+target.remove('ID')
+feature = {'AMT_INCOME_TOTAL'}
 
+FoldNum = 5
+x = pd.DataFrame(df.loc[:,target],columns=target)
+y = df[['AMT_INCOME_TOTAL']]
+x_train, x_test, y_train, y_test= train_test_split(x,y, test_size = 1/FoldNum, shuffle=True)
+x_train, x_valid, y_train, y_valid= train_test_split(x_train,y_train, test_size = 1/FoldNum, shuffle=True)
+
+param_grid = {'n_estimators':[100,200,300],'max_features':[1,4,7,10,15],'max_depth':[1,10,100,200],'criterion':["mse","friedman_mse"]}
+model = sklearn.ensemble.GradientBoostingRegressor(learning_rate=0.01,min_samples_split=3)
+
+kfold = KFold(FoldNum,shuffle=True,random_state=1)
+GBR_gscv = GridSearchCV(model, param_grid,cv=kfold,n_jobs=-1)
+GBR_gscv.fit(x_train,y_train.values.ravel())
+print(GBR_gscv.best_params_)
+print(GBR_gscv.best_score_)
+
+#GBR_gscv.fit(x_valid,y_valid.values.ravel())
+#print("\nValid Score: ",GBR_gscv.score(x_valid,y_valid))
+
+
+
+#GBR_gscv.fit(x_test,y_test.values.ravel())
+ypred = GBR_gscv.predict(x_test)
+mse_GBR = mean_squared_error(y_test,ypred)
+print("Test Score: ",GBR_gscv.score(x_test,y_test))
+print("MSE on test set: {:.4f}".format(mse_GBR))
+
+y_predict = GBR_gscv.predict(x_test)
+compareY = pd.DataFrame(y_test)
+compareY.reset_index(drop=True)
+compareY = compareY.sort_index()
+compareY['predict'] = y_predict.round()
+compareY['difference'] = abs(compareY['AMT_INCOME_TOTAL'] - compareY['predict'])
+compareY['error rate'] = compareY['difference']/compareY['AMT_INCOME_TOTAL']*100
+print("\n",compareY)
 
