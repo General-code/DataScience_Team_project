@@ -91,12 +91,12 @@ labelEncode(df,'STATUS')
 #onehot encoding
 from sklearn import preprocessing
 le = preprocessing.OneHotEncoder()
-def onehotEncode(df, name):
-    le = preprocessing.OneHotEncoder(handle_unknown='ignore')
-    enc = df[[name]]
-    enc = le.fit_transform(enc).toarray()
-    enc_df = pd.DataFrame(enc, columns=le.categories_[0])
-    df.loc[:, le.categories_[0]] = enc_df
+# def onehotEncode(df, name):
+#     le = preprocessing.OneHotEncoder(handle_unknown='ignore')
+#     enc = df[[name]]
+#     enc = le.fit_transform(enc).toarray()
+#     enc_df = pd.DataFrame(enc, columns=le.categories_[0])
+#     df.loc[:, le.categories_[0]] = enc_df
 
 #feature scaling (categorical은 labeling 돼서 필요X)
 #'AMT_INCOME_TOTAL','DAYS_BIRTH','DAYS_EMPLOYED' 세가지만
@@ -128,66 +128,77 @@ df = outliers_iqr(df,'DAYS_EMPLOYED')
 
 # Correlation HeatMap
 # Use only continuous value
-plt.figure(figsize=(10,10))
-sns.heatmap(data=df.corr(), annot=True,
+# exclude non-necessary features
+dfc = df.drop(columns=["FLAG_PHONE", "STATUS", "ID"])
+plt.figure(figsize=(14,14))
+sns.heatmap(data=dfc.corr(), annot=True,
 fmt = '.2f', linewidths=.5, cmap='Blues')
 plt.show()
-
+# plot linear regression between AMT_INCOME and the other related features
+# Use subplots with thw rows and four columns. axs has 4x2 ax.
+fig, axs = plt.subplots(figsize=(16, 8), ncols=4, nrows=2)
+lm_features = ["CNT_FAM_MEMBERS", "DAYS_BIRTH", "DAYS_EMPLOYED", "FLAG_WORK_PHONE",
+               "MONTHS_BALANCE", "CNT_CHILDREN", "FLAG_OWN_CAR", "FLAG_OWN_REALTY"]
+for i, feature in enumerate(lm_features):
+    row = int(i / 4)
+    col = i % 4
+    sns.regplot(x=feature, y='AMT_INCOME_TOTAL', data=df.head(500), ax=axs[row][col])
+plt.show()
 
 #fill 'CNT_CHILDREN' with predicted value with 'CNT_FAM_MEMBERS'
 #위에 나온 correlation에서 CNT_FAM_MEMBERS가 CNT_CHILDREN과 0.9로 아주 높은 상관관계를 가졌기 때문
-df_dropNa = df.dropna()
-x_gr = df_dropNa[['CNT_FAM_MEMBERS']]
-y_gr = df_dropNa['CNT_CHILDREN']
-reg = LinearRegression().fit(x_gr,y_gr)
-child_pred = reg.predict(df[['CNT_FAM_MEMBERS']])
-df['CNT_CHILDREN'] = child_pred
-
-#encode with onehotEncode
-df = df.reset_index(drop=True)
-onehotEncode(df,'NAME_HOUSING_TYPE')
-onehotEncode(df,'NAME_INCOME_TYPE')
-onehotEncode(df,'NAME_FAMILY_STATUS')
-onehotEncode(df,'NAME_EDUCATION_TYPE')
-df.drop(columns=['NAME_HOUSING_TYPE','NAME_INCOME_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE'],inplace=True)
-
-print(df)
-
-#Use ensemble learning to predict and evaluate (cv: KFold, GradientBoosting method)
-#target: 'AMT_INCOME_TOTAL',
-target = df.columns.tolist()
-target.remove('AMT_INCOME_TOTAL')
-target.remove('ID')
-feature = {'AMT_INCOME_TOTAL'}
-
-FoldNum = 5
-x = pd.DataFrame(df.loc[:,target],columns=target)
-y = df[['AMT_INCOME_TOTAL']]
-x_train, x_test, y_train, y_test= train_test_split(x,y, test_size = 1/FoldNum, shuffle=True)
-x_train, x_valid, y_train, y_valid= train_test_split(x_train,y_train, test_size = 1/FoldNum, shuffle=True)
-
-param_grid = {'n_estimators':[100,200,300],'max_features':[1,4,7,10,15],'max_depth':[1,10,100,200],'criterion':["mse","friedman_mse"]}
-model = sklearn.ensemble.GradientBoostingRegressor(learning_rate=0.01,min_samples_split=3)
-
-kfold = KFold(FoldNum,shuffle=True,random_state=1)
-GBR_gscv = GridSearchCV(model, param_grid,cv=kfold,n_jobs=-1)
-GBR_gscv.fit(x_train,y_train.values.ravel())
-print("Best Params: ",GBR_gscv.best_params_)
-print("Best Score: ",GBR_gscv.best_score_)
-
-#GBR_gscv.fit(x_valid,y_valid.values.ravel())
-print("Valid Score: ",GBR_gscv.score(x_valid,y_valid))
-
-#GBR_gscv.fit(x_test,y_test.values.ravel())
-ypred = GBR_gscv.predict(x_test)
-mse_GBR = mean_squared_error(y_test,ypred)
-print("Test Score: ",GBR_gscv.score(x_test,y_test))
-print("MSE on test set: {:.4f}".format(mse_GBR))
-
-y_predict = GBR_gscv.predict(x_test)
-compareY = pd.DataFrame(y_test)
-compareY = compareY.sort_index()
-compareY['predict'] = y_predict.round()
-compareY['difference'] = abs(compareY['AMT_INCOME_TOTAL'] - compareY['predict'])
-compareY['error rate'] = compareY['difference']/compareY['AMT_INCOME_TOTAL']*100
-print("\n",compareY)
+# df_dropNa = df.dropna()
+# x_gr = df_dropNa[['CNT_FAM_MEMBERS']]
+# y_gr = df_dropNa['CNT_CHILDREN']
+# reg = LinearRegression().fit(x_gr,y_gr)
+# child_pred = reg.predict(df[['CNT_FAM_MEMBERS']])
+# df['CNT_CHILDREN'] = child_pred
+#
+# #encode with onehotEncode
+# df = df.reset_index(drop=True)
+# # onehotEncode(df,'NAME_HOUSING_TYPE')
+# # onehotEncode(df,'NAME_INCOME_TYPE')
+# # onehotEncode(df,'NAME_FAMILY_STATUS')
+# # onehotEncode(df,'NAME_EDUCATION_TYPE')
+# df.drop(columns=['NAME_HOUSING_TYPE','NAME_INCOME_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE'],inplace=True)
+#
+# print(df)
+#
+# #Use ensemble learning to predict and evaluate (cv: KFold, GradientBoosting method)
+# #target: 'AMT_INCOME_TOTAL',
+# target = df.columns.tolist()
+# target.remove('AMT_INCOME_TOTAL')
+# target.remove('ID')
+# feature = {'AMT_INCOME_TOTAL'}
+#
+# FoldNum = 5
+# x = pd.DataFrame(df.loc[:,target],columns=target)
+# y = df[['AMT_INCOME_TOTAL']]
+# x_train, x_test, y_train, y_test= train_test_split(x,y, test_size = 1/FoldNum, shuffle=True)
+# x_train, x_valid, y_train, y_valid= train_test_split(x_train,y_train, test_size = 1/FoldNum, shuffle=True)
+#
+# param_grid = {'n_estimators':[100,200,300],'max_features':[1,4,7,10,15],'max_depth':[1,10,100,200],'criterion':["mse","friedman_mse"]}
+# model = sklearn.ensemble.GradientBoostingRegressor(learning_rate=0.01,min_samples_split=3)
+#
+# kfold = KFold(FoldNum,shuffle=True,random_state=1)
+# GBR_gscv = GridSearchCV(model, param_grid,cv=kfold,n_jobs=-1)
+# GBR_gscv.fit(x_train,y_train.values.ravel())
+# print("Best Params: ",GBR_gscv.best_params_)
+# print("Best Score: ",GBR_gscv.best_score_)
+#
+# #GBR_gscv.fit(x_valid,y_valid.values.ravel())
+# print("Valid Score: ",GBR_gscv.score(x_valid,y_valid))
+#
+# #GBR_gscv.fit(x_test,y_test.values.ravel())
+# ypred = GBR_gscv.predict(x_test)
+# mse_GBR = mean_squared_error(y_test,ypred)
+# print("Test Score: ",GBR_gscv.score(x_test,y_test))
+# print("MSE on test set: {:.4f}".format(mse_GBR))
+#
+# y_predict = GBR_gscv.predict(x_test)
+# compareY = pd.DataFrame(y_test)
+# compareY = compareY.sort_index()
+# compareY['predict'] = y_predict.round()
+# compareY['difference'] = abs(compareY['AMT_INCOME_TOTAL'] - compareY['predict'])
+# compareY['error rate'] = compareY['difference']/compareY['AMT_INCOME_TOTAL']*100
+# print("\n",compareY)
