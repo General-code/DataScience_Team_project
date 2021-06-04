@@ -59,6 +59,19 @@ for i in range(1,1000):
     random_row = random.randrange(0,36456)
     random_col = 4
     df.iloc[random_row,random_col] = np.nan
+print("The number of null value in CNT_CHILDREN(After) ", df['CNT_CHILDREN'].isnull().sum())
+
+#show boxplot to find if there are outliers
+plt.figure(figsize=(12,8))
+sns.boxplot(data=df['DAYS_BIRTH'],color='red')
+plt.show()
+sns.boxplot(data=df['DAYS_EMPLOYED'],color='red')
+plt.show()
+
+# minus number in DAYS_EMPLOYED means the person is unemployed
+df.loc[df['DAYS_EMPLOYED']<=0,'DAYS_EMPLOYED'] = 0
+sns.boxplot(data=df['DAYS_EMPLOYED'],color='red')
+plt.show()
 
 
 #categorical feature
