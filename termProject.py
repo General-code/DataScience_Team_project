@@ -38,38 +38,38 @@ credit = pd.read_csv(r"credit_record.csv")
 application = pd.read_csv(r"application_record.csv")
 #combine application_record.csv & credit_record.csv()
 df = application.merge(credit,how='left',on='ID')
-#print("\n============combien two csv file===============")
-#print(df)#it must have na becuase application_record doesn't have a lot of ids in the credit_record.csv
+print("\n============combien two csv file===============")
+print(df)#it must have na becuase application_record doesn't have a lot of ids in the credit_record.csv
 df = df[df['STATUS'].notna()]
 
 # make DAYS_BIRTH and DAYS_EMPLOYED be Non-negative value
 df["DAYS_BIRTH"] = -df["DAYS_BIRTH"]
 df["DAYS_EMPLOYED"] = -df["DAYS_EMPLOYED"]
 
-#print("\n============STATUS null column remove(ID that doesn't exist in application=======")
-#print(df)#ID overlapping between credit and application
+print("\n============STATUS null column remove(ID that doesn't exist in application=======")
+print(df)#ID overlapping between credit and application
 
 #Remove duplicate IDs except the first one
 df = df.drop_duplicates(['ID'],keep="first",ignore_index=True)
-#print("\n===============remove ID duplicate================")
-#print(df)
+print("\n===============remove ID duplicate================")
+print(df)
 
 #FLAG_MOBIL romove reason
 df_mobile = df[(df['FLAG_MOBIL']==1)]
 mobile_ratio = len(df_mobile)/len(df)
-#print("\n==========Ratio of mobile phone holers===========")
-#print("Ratio of mobile phone holers : " , mobile_ratio,"\n")
+print("\n==========Ratio of mobile phone holers===========")
+print("Ratio of mobile phone holers : " , mobile_ratio,"\n")
 
 #OCCUPATION remove reason
 ocp_null = df['OCCUPATION_TYPE'].isnull().sum() #null값의 개수를 구하기
-#print("ocp_null : " , ocp_null)
+print("ocp_null : " , ocp_null)
 ocp_len = len(df)
-#print("occupation_type percentage : ", ocp_null/ocp_len,"\n")
+print("occupation_type percentage : ", ocp_null/ocp_len,"\n")
 
 #Remove two columns -> FLAG_MOBIL/OCCUPATION_TYPE(모두 동일한 값이라서, 0.3%의 null값이 있어)
 df.drop(['FLAG_MOBIL' , 'OCCUPATION_TYPE'], axis=1, inplace=True)
-#print("\n========column list(after remove two columns=============")
-#print(df.columns.tolist())
+print("\n========column list(after remove two columns=============")
+print(df.columns.tolist())
 
 #create Random null values
 import random
@@ -81,19 +81,19 @@ for i in range(1,1000):
 
 #show boxplot to find if there are outliers
 plt.figure(figsize=(12,8))
-sns.boxplot(data=df['DAYS_BIRTH'],color='red')
-#plt.show()
-sns.boxplot(data=df['DAYS_EMPLOYED'],color='red')
-#plt.show()
+sns.boxplot(x="DAYS_BIRTH", data=df, orient="v" ,color='red')
+plt.show()
+sns.boxplot(x='DAYS_EMPLOYED', data=df, orient="v" ,color='red')
+plt.show()
 
 # minus number in DAYS_EMPLOYED means the person is unemployed
 df.loc[df['DAYS_EMPLOYED']<=0,'DAYS_EMPLOYED'] = 0
 sns.boxplot(data=df['DAYS_EMPLOYED'],color='red')
-#plt.show()
+plt.show()
 
 
-#print("\n========Standard Scaler for some numerical features=============")
-#print(df[['DAYS_BIRTH','DAYS_EMPLOYED']])
+print("\n========Standard Scaler for some numerical features=============")
+print(df[['DAYS_BIRTH','DAYS_EMPLOYED']])
 
 #outlier
 #numericla features(those have outliers)
@@ -116,6 +116,7 @@ def outliers_iqr(df,name):
 # Correlation HeatMap
 # Use only continuous value
 # exclude non-necessary features
+print(df.corr())
 dfc = df.drop(columns=["FLAG_PHONE", "STATUS", "ID"])
 plt.figure(figsize=(14, 14))
 sns.heatmap(data=dfc.corr(), annot=True,
@@ -137,22 +138,22 @@ labelEncode(df_tmpPreprocess,'FLAG_OWN_CAR')
 labelEncode(df_tmpPreprocess,'FLAG_OWN_REALTY')
 labelEncode(df_tmpPreprocess,'STATUS')
 
-onehotEncode(df_tmpPreprocess,'NAME_HOUSING_TYPE')
-onehotEncode(df_tmpPreprocess,'NAME_INCOME_TYPE')
-onehotEncode(df_tmpPreprocess,'NAME_FAMILY_STATUS')
-onehotEncode(df_tmpPreprocess,'NAME_EDUCATION_TYPE')
+# onehotEncode(df_tmpPreprocess,'NAME_HOUSING_TYPE')
+# onehotEncode(df_tmpPreprocess,'NAME_INCOME_TYPE')
+# onehotEncode(df_tmpPreprocess,'NAME_FAMILY_STATUS')
+# onehotEncode(df_tmpPreprocess,'NAME_EDUCATION_TYPE')
 
 # plot linear regression between AMT_INCOME and the other related features
 # Use subplots with thw rows and four columns. axs has 4x2 ax.
 sampled_df = df_tmpPreprocess.sample(n=150, random_state=1)
 fig, axs = plt.subplots(figsize=(16, 8), ncols=4, nrows=2)
 lm_features = ["CNT_FAM_MEMBERS", "DAYS_BIRTH", "DAYS_EMPLOYED", "FLAG_WORK_PHONE",
-               "MONTHS_BALANCE", "CNT_CHILDREN", "FLAG_OWN_CAR", "FLAG_OWN_REALTY"]
+               "CODE_GENDER", "CNT_CHILDREN", "FLAG_OWN_CAR", "FLAG_OWN_REALTY"]
 for i, feature in enumerate(lm_features):
     row = int(i / 4)
     col = i % 4
     sns.regplot(x=feature, y='AMT_INCOME_TOTAL', data=sampled_df, ax=axs[row][col])
-#plt.show()
+# plt.show()
 
 
 #fill 'CNT_CHILDREN' with predicted value with 'CNT_FAM_MEMBERS'
@@ -166,20 +167,21 @@ reg = LinearRegression().fit(x_gr,y_gr)
 reg_tmp = LinearRegression().fit(x_tmp_gr,y_tmp_gr)
 child_pred = reg.predict(df[['CNT_FAM_MEMBERS']])
 child_pred_tmp = reg_tmp.predict(df[['CNT_FAM_MEMBERS']])
-#print("The number of null value in CNT_CHILDREN(Before) ",df['CNT_CHILDREN'].isnull().sum())
-#print("The number of null value in CNT_CHILDREN(Before) ",df_tmpPreprocess['CNT_CHILDREN'].isnull().sum())
+print("The number of null value in CNT_CHILDREN(Before) ",df['CNT_CHILDREN'].isnull().sum())
+print("The number of null value in CNT_CHILDREN(Before) ",df_tmpPreprocess['CNT_CHILDREN'].isnull().sum())
 df['CNT_CHILDREN'] = np.where(df['CNT_CHILDREN'].isnull(),pd.Series(child_pred.flatten()),df['CNT_CHILDREN'])
 df_tmpPreprocess['CNT_CHILDREN'] = np.where(df_tmpPreprocess['CNT_CHILDREN'].isnull(),pd.Series(child_pred.flatten()),df_tmpPreprocess['CNT_CHILDREN'])
-#print("The number of null value in CNT_CHILDREN(After) ",df['CNT_CHILDREN'].isnull().sum())
-#print("The number of null value in CNT_CHILDREN(After) ",df_tmpPreprocess['CNT_CHILDREN'].isnull().sum())
+print("The number of null value in CNT_CHILDREN(After) ",df['CNT_CHILDREN'].isnull().sum())
+print("The number of null value in CNT_CHILDREN(After) ",df_tmpPreprocess['CNT_CHILDREN'].isnull().sum())
 
 #categorical feature
 #NAME_HOUSING_TYPE/ CODE_GENDER/ FLAG_OWN_CAR
 #/NAME_INCOME_TYPE/NAME_FAMILY_STATUS/NAME_EDUCATION_TYPE
 #STATUS <- 이미 라벨링
 
-categorical = ['CODE_GENDER','FLAG_OWN_CAR','FLAG_OWN_REALTY','STATUS','NAME_HOUSING_TYPE','NAME_INCOME_TYPE','NAME_FAMILY_STATUS','NAME_EDUCATION_TYPE']
-numerical = ['DAYS_BIRTH','DAYS_EMPLOYED']
+categorical = ['CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY', 'STATUS', 'NAME_HOUSING_TYPE',
+               'NAME_INCOME_TYPE', 'NAME_FAMILY_STATUS', 'NAME_EDUCATION_TYPE']
+numerical = ['DAYS_BIRTH', 'DAYS_EMPLOYED']
 scaler = ['standard','minMax','Robust']
 encoder = ['label','oneHot']
 
