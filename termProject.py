@@ -222,7 +222,7 @@ for scale in after_preprocess:
 
         RFR_y_predict = RFR_gscv.best_estimator_.predict(x_test)
         RFR_score = RFR_gscv.score(x_test,y_test)
-        RFR_score = str(round(RFR_score,4))+"%"
+        RFR_score = str(round(RFR_score*100,4))+"%"
         RFR_mse = mean_squared_error(RFR_y_predict,y_test).round(2)
 
         RFR_compareY = pd.DataFrame.copy(y_test)
@@ -251,7 +251,7 @@ for scale in after_preprocess:
 
         Bagging_y_predict = Bagging_gscv.best_estimator_.predict(x_test)
         Bagging_score = Bagging_gscv.score(x_test,y_test)
-        Bagging_score = str(round(Bagging_score, 4)) + "%"
+        Bagging_score = str(round(Bagging_score*100, 4)) + "%"
         Bagging_mse = mean_squared_error(Bagging_y_predict,y_test).round(2)
 
         Bagging_compareY = pd.DataFrame.copy(y_test)
@@ -277,7 +277,7 @@ for scale in after_preprocess:
 
         GBR_y_predict = GBR_gscv.best_estimator_.predict(x_test)
         GBR_score = GBR_gscv.score(x_test,y_test)
-        GBR_score = str(round(GBR_score, 4)) + "%"
+        GBR_score = str(round(GBR_score*100, 4)) + "%"
         GBR_mse = mean_squared_error(GBR_y_predict,y_test).round(2)
 
         GBR_compareY = pd.DataFrame.copy(y_test)
@@ -313,7 +313,7 @@ RFR_gscv.fit(x_train,y_train.values.ravel())
 
 RFR_y_predict = RFR_gscv.best_estimator_.predict(x_test)
 RFR_score = RFR_gscv.score(x_test,y_test)
-RFR_score = str(round(RFR_score,4))+"%"
+RFR_score = str(round(RFR_score*100,4))+"%"
 RFR_mse = mean_squared_error(RFR_y_predict,y_test).round(2)
 
 RFR_compareY = pd.DataFrame.copy(y_test)
@@ -342,7 +342,7 @@ Bagging_gscv.fit(x_train,y_train.values.ravel())
 
 Bagging_y_predict = Bagging_gscv.best_estimator_.predict(x_test)
 Bagging_score = Bagging_gscv.score(x_test,y_test)
-Bagging_score = str(round(Bagging_score, 4)) + "%"
+Bagging_score = str(round(Bagging_score*100, 4)) + "%"
 Bagging_mse = mean_squared_error(Bagging_y_predict,y_test).round(2)
 
 Bagging_compareY = pd.DataFrame.copy(y_test)
@@ -368,7 +368,7 @@ GBR_gscv.fit(x_train,y_train.values.ravel())
 
 GBR_y_predict = GBR_gscv.best_estimator_.predict(x_test)
 GBR_score = GBR_gscv.score(x_test,y_test)
-GBR_score = str(round(GBR_score, 4)) + "%"
+GBR_score = str(round(GBR_score*100, 4)) + "%"
 GBR_mse = mean_squared_error(GBR_y_predict,y_test).round(2)
 
 GBR_compareY = pd.DataFrame.copy(y_test)
@@ -386,5 +386,5 @@ time_spent.append(time_spent_GBR)
 
 resultValue = {'name':name,'type':type,'score':score,'mse':mse,'time_spent':time_spent}
 result = pd.DataFrame(resultValue)
-result.sort_values(by=['score'],axis=0,ascending=False,inplace=True)
+result.sort_values(by=['mse'],axis=0,inplace=True)
 print(result)
