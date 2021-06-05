@@ -83,12 +83,13 @@ for i in range(1,1000):
 plt.figure(figsize=(12,8))
 sns.boxplot(x="DAYS_BIRTH", data=df, orient="v" ,color='red')
 plt.show()
+plt.figure(figsize=(13,9))
 sns.boxplot(x='DAYS_EMPLOYED', data=df, orient="v" ,color='red')
 plt.show()
 
 # minus number in DAYS_EMPLOYED means the person is unemployed
 df.loc[df['DAYS_EMPLOYED']<=0,'DAYS_EMPLOYED'] = 0
-sns.boxplot(data=df['DAYS_EMPLOYED'],color='red')
+sns.boxplot(x='DAYS_EMPLOYED' ,data=df, orient='v' ,color='red')
 plt.show()
 
 
